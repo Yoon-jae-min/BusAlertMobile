@@ -39,13 +39,7 @@
           "locationAlwaysAndWhenInUsePermission": "버스 정류장까지의 도보 시간을 계산하기 위해 위치 정보가 필요합니다."
         }
       ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#3b82f6"
-        }
-      ]
+      "expo-asset"
     ],
     "web": {
       "favicon": "./assets/favicon.png"

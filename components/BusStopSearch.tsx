@@ -8,6 +8,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { BusStop } from '../types';
 import { searchBusStops } from '../utils/busApi';
 
@@ -50,7 +51,10 @@ export default function BusStopSearch({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🔍 정류장 검색</Text>
+      <View style={styles.titleRow}>
+        <Ionicons name="search" size={18} color="#38bdf8" style={styles.titleIcon} />
+        <Text style={styles.title}>정류장 검색</Text>
+      </View>
 
       <View style={styles.searchContainer}>
         <TextInput
@@ -112,6 +116,9 @@ export default function BusStopSearch({
             </TouchableOpacity>
           )}
           style={styles.resultsList}
+          scrollEnabled={false}
+          nestedScrollEnabled={false}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -120,21 +127,23 @@ export default function BusStopSearch({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: 'rgba(15,23,42,0.98)',
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.35)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.5,
+    shadowRadius: 34,
+    elevation: 8,
   },
   title: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 12,
+    color: '#e5e7eb',
+    marginBottom: 10,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -144,43 +153,45 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  searchButton: {
-    backgroundColor: '#3b82f6',
+    borderColor: 'rgba(148,163,184,0.6)',
+    borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    fontSize: 15,
+    color: '#e5e7eb',
+    backgroundColor: '#020617',
+  },
+  searchButton: {
+    backgroundColor: '#0ea5e9',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
     justifyContent: 'center',
   },
   searchButtonText: {
-    color: '#fff',
-    fontWeight: '500',
+    color: '#0b1120',
+    fontWeight: '700',
   },
   disabled: {
     opacity: 0.5,
   },
   selectedContainer: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: 'rgba(8,47,73,0.95)',
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#93c5fd',
+    borderColor: '#38bdf8',
   },
   selectedTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1e40af',
+    color: '#e5e7eb',
     marginBottom: 4,
   },
   selectedSubtitle: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#bae6fd',
     marginBottom: 8,
   },
   deselectButton: {
@@ -188,31 +199,31 @@ const styles = StyleSheet.create({
   },
   deselectText: {
     fontSize: 12,
-    color: '#3b82f6',
+    color: '#7dd3fc',
   },
   resultsList: {
     maxHeight: 200,
   },
   resultItem: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#020617',
     padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: 12,
+    marginBottom: 10,
   },
   resultName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1f2937',
+    color: '#e5e7eb',
     marginBottom: 4,
   },
   resultNumber: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#cbd5f5',
     marginBottom: 2,
   },
   resultAddress: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: '#94a3b8',
   },
 });
 

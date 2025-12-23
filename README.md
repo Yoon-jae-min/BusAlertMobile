@@ -58,21 +58,64 @@ npm start
 
 ## 환경 변수 설정
 
-`.env` 파일을 생성하고 다음을 추가하세요:
+프로젝트 루트에 `.env` 파일을 생성하고 다음을 추가하세요:
 
 ```env
-# 공공데이터포털 API 키 (버스 도착 정보)
-EXPO_PUBLIC_BUS_API_KEY=your_api_key_here
-EXPO_PUBLIC_BUS_API_URL=https://api.example.com
+# 카카오 로컬 API 키 (정류장 검색)
+EXPO_PUBLIC_KAKAO_REST_KEY=your_kakao_rest_api_key_here
+
+# 서울시 버스정보시스템 API 키 (버스 도착 정보)
+EXPO_PUBLIC_SEOUL_BUS_API_KEY=your_seoul_bus_api_key_here
 ```
 
 ## API 키 발급
 
-### 공공데이터포털 (버스 도착 정보)
-1. https://www.data.go.kr 접속
-2. "버스 도착 정보" 검색
-3. 원하는 지역 API 선택 후 신청
-4. API 키 발급
+### 1. 카카오 로컬 API 키 (정류장 검색)
+1. https://developers.kakao.com/ 접속
+2. 내 애플리케이션 → 애플리케이션 추가하기
+3. 앱 설정 → 플랫폼 설정 (웹 플랫폼 등록 필요)
+4. 앱 키 → REST API 키 복사
+5. `.env` 파일에 `EXPO_PUBLIC_KAKAO_REST_KEY`로 설정
+
+### 2. 버스 도착 정보 API 키 (전국 지원)
+
+앱은 위치 기반으로 지역을 자동 감지하여 해당 지역의 API를 사용합니다.
+
+**지원 지역:**
+- 서울시
+- 경기도
+- 부산시
+- 인천시
+- 대구시
+- 광주시
+- 대전시
+- 울산시
+
+**API 키 발급 방법:**
+
+**서울시:**
+1. https://www.data.go.kr/ 또는 http://data.seoul.go.kr/ 접속
+2. "서울시 버스정보시스템" 검색 후 API 신청
+3. `.env` 파일에 `EXPO_PUBLIC_SEOUL_BUS_API_KEY`로 설정
+
+**경기도:**
+1. https://www.data.go.kr/ 접속
+2. "경기도 버스정보시스템" 검색 후 API 신청
+3. `.env` 파일에 `EXPO_PUBLIC_GYEONGGI_BUS_API_KEY`로 설정
+
+**기타 지역:**
+- 각 지역별로 공공데이터포털에서 해당 지역 버스 API 검색
+- 환경변수명: `EXPO_PUBLIC_[지역명]_BUS_API_KEY`
+  - 예: `EXPO_PUBLIC_BUSAN_BUS_API_KEY`, `EXPO_PUBLIC_INCHEON_BUS_API_KEY` 등
+
+**전국 통합 API (TAGO):**
+- 국가대중교통정보센터 API 사용 가능
+- `.env` 파일에 `EXPO_PUBLIC_TAGO_API_KEY`로 설정하면 전국 지원
+
+**참고**: 
+- API 키가 없어도 앱은 실행되지만, 더미 데이터를 사용합니다.
+- 위치 기반으로 자동으로 지역을 감지하여 해당 지역 API를 사용합니다.
+- 각 지역별 API 구조가 다를 수 있어 일부 지역은 추가 작업이 필요할 수 있습니다.
 
 ## 앱 빌드 및 배포
 
