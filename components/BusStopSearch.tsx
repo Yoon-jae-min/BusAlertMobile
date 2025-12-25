@@ -139,11 +139,18 @@ const styles = StyleSheet.create({
     shadowRadius: 34,
     elevation: 8,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  titleIcon: {
+    marginRight: 8,
+  },
   title: {
     fontSize: 17,
     fontWeight: '600',
     color: '#e5e7eb',
-    marginBottom: 10,
   },
   searchContainer: {
     flexDirection: 'row',

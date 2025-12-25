@@ -19,7 +19,6 @@ const REGIONAL_BIS_HOSTS: Record<string, string> = {
   daegu: 'http://apis.data.go.kr/6270000', // 대구 (예시)
   gwangju: 'http://apis.data.go.kr/6290000', // 광주 (예시)
   daejeon: 'http://apis.data.go.kr/6300000', // 대전 (예시)
-  ulsan: 'http://apis.data.go.kr/6310000', // 울산 (예시)
 };
 
 type KakaoPlace = {
@@ -125,7 +124,7 @@ export async function getBusArrivalInfo(
 /**
  * 위도/경도 기반으로 지역 감지
  */
-function detectRegion(latitude?: number, longitude?: number): string {
+export function detectRegion(latitude?: number, longitude?: number): string {
   if (!latitude || !longitude) {
     // 기본값: 서울
     return 'seoul';
@@ -135,6 +134,11 @@ function detectRegion(latitude?: number, longitude?: number): string {
   // 서울: 37.4 ~ 37.7, 126.8 ~ 127.2
   if (latitude >= 37.4 && latitude <= 37.7 && longitude >= 126.8 && longitude <= 127.2) {
     return 'seoul';
+  }
+  
+  // 인천: 37.4 ~ 37.6, 126.5 ~ 126.8 (서울보다 먼저 체크)
+  if (latitude >= 37.4 && latitude <= 37.6 && longitude >= 126.5 && longitude <= 126.8) {
+    return 'incheon';
   }
   
   // 경기도: 서울 주변
@@ -147,18 +151,40 @@ function detectRegion(latitude?: number, longitude?: number): string {
     return 'busan';
   }
   
-  // 인천: 37.4 ~ 37.6, 126.5 ~ 126.8
-  if (latitude >= 37.4 && latitude <= 37.6 && longitude >= 126.5 && longitude <= 126.8) {
-    return 'incheon';
-  }
-  
   // 대구: 35.7 ~ 36.0, 128.4 ~ 128.7
   if (latitude >= 35.7 && latitude <= 36.0 && longitude >= 128.4 && longitude <= 128.7) {
     return 'daegu';
   }
   
+  // 광주: 35.1 ~ 35.2, 126.8 ~ 126.9
+  if (latitude >= 35.1 && latitude <= 35.2 && longitude >= 126.8 && longitude <= 126.9) {
+    return 'gwangju';
+  }
+  
+  // 대전: 36.3 ~ 36.4, 127.3 ~ 127.5
+  if (latitude >= 36.3 && latitude <= 36.4 && longitude >= 127.3 && longitude <= 127.5) {
+    return 'daejeon';
+  }
+  
   // 기본값: 서울
   return 'seoul';
+}
+
+/**
+ * 지역 코드를 한글 지역명으로 변환
+ */
+export function getRegionName(region: string): string {
+  const regionNames: Record<string, string> = {
+    seoul: '서울특별시',
+    gyeonggi: '경기도',
+    busan: '부산광역시',
+    incheon: '인천광역시',
+    daegu: '대구광역시',
+    gwangju: '광주광역시',
+    daejeon: '대전광역시',
+  };
+  
+  return regionNames[region] || '서울특별시';
 }
 
 /**
@@ -174,7 +200,6 @@ function getRegionalApiKey(region: string): string | null {
     daegu: process.env.EXPO_PUBLIC_DAEGU_BUS_API_KEY,
     gwangju: process.env.EXPO_PUBLIC_GWANGJU_BUS_API_KEY,
     daejeon: process.env.EXPO_PUBLIC_DAEJEON_BUS_API_KEY,
-    ulsan: process.env.EXPO_PUBLIC_ULSAN_BUS_API_KEY,
   };
 
   // 전국 통합 API 키 (TAGO)가 있으면 우선 사용

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BusStop, BusArrival } from '../types';
-import { getBusArrivalInfo } from '../utils/busApi';
+import { getBusArrivalInfo, detectRegion, getRegionName } from '../utils/busApi';
 import { scheduleNotification, requestNotificationPermission, isExpoGoEnvironment } from '../utils/notifications';
 import { calculateWalkingTime } from '../utils/walkingTime';
 import { Location } from '../types';
@@ -239,7 +239,6 @@ export default function BusArrivalInfo({
                     name={isSelected ? 'checkmark-circle' : 'notifications-outline'}
                     size={18}
                     color="#fff"
-                    style={styles.alertButtonIcon}
                   />
                   <Text style={styles.alertButtonText}>
                     {isSelected ? '알림 설정됨' : '출발 알림 설정'}
@@ -250,6 +249,13 @@ export default function BusArrivalInfo({
           })}
         </View>
       )}
+      
+      {/* 데이터 출처 표기 */}
+      <View style={styles.attribution}>
+        <Text style={styles.attributionText}>
+          데이터 제공: {getRegionName(detectRegion(busStop.latitude, busStop.longitude))}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -277,6 +283,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  titleIcon: {
+    marginRight: 8,
   },
   title: {
     fontSize: 17,
@@ -411,6 +424,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  attribution: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(148,163,184,0.2)',
+    alignItems: 'center',
+  },
+  attributionText: {
+    fontSize: 11,
+    color: '#6b7280',
+    textAlign: 'center',
   },
 });
 

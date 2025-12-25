@@ -5,7 +5,7 @@ import LocationTracker from '../components/LocationTracker';
 import BusStopSearch from '../components/BusStopSearch';
 import BusArrivalInfo from '../components/BusArrivalInfo';
 import { Location, BusStop } from '../types';
-import { calculateWalkingTime } from '../utils/walkingTime';
+import { calculateWalkingTime, calculateDistanceQuick } from '../utils/walkingTime';
 import { getSettings } from '../utils/storage';
 import { useNearbyStops } from '../hooks/useNearbyStops';
 
@@ -33,8 +33,9 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (currentLocation && selectedStop) {
-      const route = calculateWalkingTime(currentLocation, selectedStop);
-      setWalkingTime(route.duration);
+      calculateWalkingTime(currentLocation, selectedStop).then((route) => {
+        setWalkingTime(route.duration);
+      });
     } else {
       setWalkingTime(null);
     }
@@ -51,13 +52,11 @@ export default function HomeScreen() {
 
   const renderStopItem = ({ item }: { item: BusStop }) => {
     const distance = currentLocation
-      ? Math.round(calculateWalkingTime(currentLocation, item).distance)
+      ? Math.round(calculateDistanceQuick(currentLocation, item))
       : null;
     const isSelected = selectedStop?.id === item.id;
     const isFav = nearbyStops.favorites.has(item.id);
-    const itemWalkingTime = isSelected && currentLocation && selectedStop
-      ? calculateWalkingTime(currentLocation, selectedStop).duration
-      : null;
+    const itemWalkingTime = isSelected ? walkingTime : null;
 
     return (
       <View>

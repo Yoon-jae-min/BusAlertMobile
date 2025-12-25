@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BusStop, Location } from '../types';
 import { searchNearbyBusStops } from '../utils/busApi';
-import { calculateWalkingTime } from '../utils/walkingTime';
+import { calculateDistanceQuick } from '../utils/walkingTime';
 import { saveFavorite, removeFavorite, isFavorite } from '../utils/storage';
 
 interface NearbyStopsProps {
@@ -90,9 +90,7 @@ export default function NearbyStops({
 
   const renderItem = ({ item }: { item: BusStop }) => {
     const distance = currentLocation
-      ? Math.round(
-          calculateWalkingTime(currentLocation, item).distance
-        )
+      ? Math.round(calculateDistanceQuick(currentLocation, item))
       : null;
 
     const isSelected = selectedStop?.id === item.id;
