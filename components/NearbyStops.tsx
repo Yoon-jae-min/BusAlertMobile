@@ -89,9 +89,12 @@ export default function NearbyStops({
   };
 
   const renderItem = ({ item }: { item: BusStop }) => {
-    const distance = currentLocation
-      ? Math.round(calculateDistanceQuick(currentLocation, item))
-      : null;
+    // API 응답의 distance 값이 있으면 사용, 없으면 계산
+    const distance = item.distance !== undefined
+      ? item.distance
+      : currentLocation
+        ? Math.round(calculateDistanceQuick(currentLocation, item))
+        : null;
 
     const isSelected = selectedStop?.id === item.id;
     const isFav = favorites.has(item.id);
@@ -105,7 +108,6 @@ export default function NearbyStops({
         <View style={styles.stopContent}>
           <View style={styles.stopInfo}>
             <Text style={styles.stopName}>{item.name}</Text>
-            {item.number && <Text style={styles.stopNumber}>번호: {item.number}</Text>}
             {item.address && <Text style={styles.stopAddress}>{item.address}</Text>}
             {distance !== null && (
               <Text style={styles.stopDistance}>거리: {distance}m</Text>

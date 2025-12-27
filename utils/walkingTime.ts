@@ -26,7 +26,8 @@ export async function calculateWalkingTime(
 }
 
 /**
- * 카카오 길찾기 API를 사용한 도보 경로 조회
+ * 카카오 자동차 길찾기 API를 사용한 경로 거리 조회
+ * 주의: 카카오 길찾기 API는 자동차 전용이지만, 거리 정보를 가져와서 도보 속도로 시간 계산
  */
 async function requestKakaoDirections(
   from: Location,
@@ -45,7 +46,7 @@ async function requestKakaoDirections(
   const url = new URL(`${KAKAO_HOST}/v1/directions`);
   url.searchParams.append('origin', origin);
   url.searchParams.append('destination', destination);
-  url.searchParams.append('mode', 'walking');
+  // mode 파라미터 제거: 카카오 길찾기 API는 자동차 전용이지만 거리 정보는 활용 가능
 
   try {
     const response = await fetch(url.toString(), {
@@ -61,13 +62,20 @@ async function requestKakaoDirections(
 
     const data = await response.json();
 
-    // 응답 구조: routes[0].summary.distance, routes[0].summary.duration
+    // 응답 구조: routes[0].summary.distance (자동차 경로 거리)
+    // 자동차 경로의 거리를 도보 속도로 계산
     if (data?.routes && data.routes.length > 0) {
       const summary = data.routes[0].summary;
-      if (summary?.distance && summary?.duration) {
+      if (summary?.distance) {
+        const distance = summary.distance; // 미터 (자동차 경로 거리)
+        
+        // 평균 도보 속도: 4km/h = 1.11m/s
+        const walkingSpeed = 1.11; // m/s
+        const duration = Math.ceil(distance / walkingSpeed); // 초
+        
         return {
-          distance: summary.distance, // 미터
-          duration: summary.duration, // 초
+          distance: distance,
+          duration: duration, // 도보 속도로 계산한 시간
         };
       }
     }

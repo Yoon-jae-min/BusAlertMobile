@@ -13,6 +13,7 @@ export interface BusStop {
   latitude: number;
   longitude: number;
   address?: string;
+  distance?: number; // 중심좌표까지의 거리 (미터) - API 응답에서 제공되는 경우
 }
 
 // 버스 도착 정보 타입
@@ -22,8 +23,10 @@ export interface BusArrival {
   routeType?: string; // 간선, 지선, 광역 등
   arrivalTime: number; // 도착까지 남은 시간 (초)
   arrivalTime2?: number; // 두 번째 버스 도착 시간
-  locationNo1?: number; // 첫 번째 버스 위치
-  locationNo2?: number; // 두 번째 버스 위치
+  locationNo1?: number; // 첫 번째 버스 남은 정류장 수
+  locationNo2?: number; // 두 번째 버스 남은 정류장 수
+  vehicleType1?: string; // 첫 번째 버스 차량유형
+  vehicleType2?: string; // 두 번째 버스 차량유형
   lowPlate?: boolean; // 저상버스 여부
 }
 

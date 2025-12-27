@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   RECENT_SEARCHES: '@busalert:recent_searches',
   ALERT_HISTORY: '@busalert:alert_history',
   SETTINGS: '@busalert:settings',
+  CITY_CODES: '@busalert:city_codes',
 };
 
 // 즐겨찾기 정류장
@@ -139,6 +140,32 @@ export async function saveSettings(settings: Partial<AppSettings>): Promise<bool
     return true;
   } catch (error) {
     console.error('설정 저장 실패:', error);
+    return false;
+  }
+}
+
+// 도시코드 목록
+export interface CityCode {
+  citycode: string; // 도시코드
+  cityname: string; // 도시명
+}
+
+export async function getCityCodes(): Promise<CityCode[]> {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.CITY_CODES);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('도시코드 목록 불러오기 실패:', error);
+    return [];
+  }
+}
+
+export async function saveCityCodes(cityCodes: CityCode[]): Promise<boolean> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.CITY_CODES, JSON.stringify(cityCodes));
+    return true;
+  } catch (error) {
+    console.error('도시코드 목록 저장 실패:', error);
     return false;
   }
 }

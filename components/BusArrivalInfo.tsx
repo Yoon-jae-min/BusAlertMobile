@@ -10,7 +10,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BusStop, BusArrival } from '../types';
-import { getBusArrivalInfo, detectRegion, getRegionName } from '../utils/busApi';
+import { 
+  detectRegion, 
+  getRegionName, 
+  getRegionSupportMessage,
+  findStationInfoByNameTago,
+  getBusArrivalInfoTago
+} from '../utils/busApi';
 import { scheduleNotification, requestNotificationPermission, isExpoGoEnvironment } from '../utils/notifications';
 import { calculateWalkingTime } from '../utils/walkingTime';
 import { Location } from '../types';
@@ -19,42 +25,67 @@ import { addAlertHistory } from '../utils/storage';
 interface BusArrivalInfoProps {
   busStop: BusStop;
   currentLocation: Location;
-  walkingTime: number | null;
+  cityCode?: string | null;
   inline?: boolean;
 }
 
 export default function BusArrivalInfo({
   busStop,
   currentLocation,
-  walkingTime,
+  cityCode,
   inline = false,
 }: BusArrivalInfoProps) {
   const [arrivals, setArrivals] = useState<BusArrival[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
+  const [supportMessage, setSupportMessage] = useState<string | null>(null);
+  const [selectedBusIndex, setSelectedBusIndex] = useState<number | null>(null); // 선택된 버스 인덱스 (첫 번째=0, 두 번째=1)
+  const [walkingTime, setWalkingTime] = useState<number | null>(null); // 노선 선택 시 조회하는 도보 시간
+  const [isLoadingWalkingTime, setIsLoadingWalkingTime] = useState(false);
 
   const fetchArrivalInfo = async () => {
+    if (!cityCode) {
+      console.warn('도시 코드가 없어 도착 정보를 조회할 수 없습니다.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const arrivals = await getBusArrivalInfo(
-        busStop.id,
-        busStop.name,
-        busStop.latitude,
-        busStop.longitude
-      );
-      setArrivals(arrivals);
+      // 정류소 정보 조회 (nodeId 얻기)
+      const stationInfo = await findStationInfoByNameTago(busStop.name, cityCode);
+      if (!stationInfo) {
+        console.warn('정류소 정보를 찾을 수 없습니다.');
+        setArrivals([]);
+        return;
+      }
+
+      // 정류소 정보를 얻었으니 바로 도착 정보 조회
+      const arrivalData = await getBusArrivalInfoTago(stationInfo.stationId, cityCode);
+      setArrivals(arrivalData);
     } catch (error) {
       console.error('도착 정보 조회 오류:', error);
+      setArrivals([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchArrivalInfo();
-    const interval = setInterval(fetchArrivalInfo, 30000); // 30초마다 갱신
-    return () => clearInterval(interval);
-  }, [busStop]);
+    // 지역 지원 여부 확인
+    const message = getRegionSupportMessage(busStop.latitude, busStop.longitude);
+    setSupportMessage(message);
+    
+    // 정류장이 변경되면 도보 시간 및 선택 상태 초기화
+    setWalkingTime(null);
+    setSelectedRoute(null);
+    setSelectedBusIndex(null);
+    
+    if (!message && cityCode) {
+      fetchArrivalInfo();
+      const interval = setInterval(fetchArrivalInfo, 30000); // 30초마다 갱신
+      return () => clearInterval(interval);
+    }
+  }, [busStop, cityCode]);
 
   const calculateDepartureTime = (arrivalTime: number): Date | null => {
     if (!walkingTime) return null;
@@ -161,30 +192,66 @@ export default function BusArrivalInfo({
           <Ionicons name="time-outline" size={20} color="#38bdf8" style={styles.titleIcon} />
           <Text style={styles.title}>도착 정보</Text>
         </View>
-        <TouchableOpacity
-          onPress={fetchArrivalInfo}
-          style={styles.refreshButton}
-        >
-          <Text style={styles.refreshButtonText}>새로고침</Text>
-        </TouchableOpacity>
+        {!supportMessage && (
+          <TouchableOpacity
+            onPress={fetchArrivalInfo}
+            style={styles.refreshButton}
+          >
+            <Text style={styles.refreshButtonText}>새로고침</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {arrivals.length === 0 ? (
+      {supportMessage ? (
+        <View style={styles.notSupportedContainer}>
+          <Ionicons name="warning-outline" size={32} color="#f59e0b" style={styles.warningIcon} />
+          <Text style={styles.notSupportedTitle}>지원되지 않는 지역</Text>
+          <Text style={styles.notSupportedText}>{supportMessage}</Text>
+        </View>
+      ) : arrivals.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>도착 예정인 버스가 없습니다.</Text>
         </View>
       ) : (
         <View style={[styles.scrollView, inline && styles.scrollViewInline]}>
           {arrivals.map((arrival) => {
-            const departureTime = calculateDepartureTime(arrival.arrivalTime);
-            const isSelected = selectedRoute === arrival.routeId;
+            const isRouteSelected = selectedRoute === arrival.routeId;
+            const handleRoutePress = async () => {
+              if (isRouteSelected && selectedBusIndex !== null) {
+                // 이미 선택된 노선을 다시 클릭하면 해제
+                setSelectedRoute(null);
+                setSelectedBusIndex(null);
+                setWalkingTime(null);
+              } else {
+                // 노선 선택 (기본적으로 첫 번째 버스 선택)
+                setSelectedRoute(arrival.routeId);
+                setSelectedBusIndex(0);
+                
+                // 노선 선택 시 도보 시간 조회
+                if (!walkingTime) {
+                  setIsLoadingWalkingTime(true);
+                  try {
+                    const route = await calculateWalkingTime(currentLocation, busStop);
+                    if (route) {
+                      setWalkingTime(route.duration);
+                    }
+                  } catch (error) {
+                    console.error('도보 시간 조회 오류:', error);
+                  } finally {
+                    setIsLoadingWalkingTime(false);
+                  }
+                }
+              }
+            };
 
             return (
-              <View
+              <TouchableOpacity
                 key={arrival.routeId}
+                onPress={handleRoutePress}
+                activeOpacity={0.7}
                 style={[
                   styles.arrivalCard,
-                  isSelected && styles.selectedCard,
+                  isRouteSelected && styles.selectedCard,
                 ]}
               >
                 <View style={styles.routeHeader}>
@@ -200,19 +267,159 @@ export default function BusArrivalInfo({
                 </View>
 
                 <View style={styles.arrivalInfo}>
-                  <View style={styles.arrivalRow}>
+                  <TouchableOpacity
+                    style={styles.arrivalRow}
+                    onPress={async (e) => {
+                      e.stopPropagation();
+                      setSelectedRoute(arrival.routeId);
+                      setSelectedBusIndex(0);
+                      
+                      // 첫 번째 버스 선택 시 도보 시간 조회 (아직 조회하지 않은 경우)
+                      if (!walkingTime) {
+                        setIsLoadingWalkingTime(true);
+                        try {
+                          const route = await calculateWalkingTime(currentLocation, busStop);
+                          if (route) {
+                            setWalkingTime(route.duration);
+                          }
+                        } catch (error) {
+                          console.error('도보 시간 조회 오류:', error);
+                        } finally {
+                          setIsLoadingWalkingTime(false);
+                        }
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.arrivalLabel}>첫 번째 버스:</Text>
-                    <Text style={styles.arrivalTime}>
-                      {formatTime(arrival.arrivalTime)} 후 도착
-                    </Text>
-                  </View>
-                  {arrival.arrivalTime2 && (
-                    <View style={styles.arrivalRow}>
-                      <Text style={styles.arrivalLabel}>두 번째 버스:</Text>
-                      <Text style={styles.arrivalTime2}>
-                        {formatTime(arrival.arrivalTime2)} 후 도착
+                    <View style={styles.arrivalDetails}>
+                      {arrival.locationNo1 !== undefined && (
+                        <Text style={styles.arrivalDetailText}>
+                          남은 정류장: {arrival.locationNo1}개
+                        </Text>
+                      )}
+                      {arrival.vehicleType1 && (
+                        <Text style={styles.arrivalDetailText}>
+                          차량유형: {arrival.vehicleType1}
+                        </Text>
+                      )}
+                      <Text style={styles.arrivalTime}>
+                        도착예상시간: {formatTime(arrival.arrivalTime)}
                       </Text>
+                      {isRouteSelected && selectedBusIndex === 0 && (() => {
+                        if (isLoadingWalkingTime) {
+                          return (
+                            <Text style={styles.loadingMessage}>
+                              도보 시간 계산 중...
+                            </Text>
+                          );
+                        }
+                        if (!walkingTime) {
+                          return null;
+                        }
+                        const departureTimeSeconds = arrival.arrivalTime - walkingTime;
+                        if (departureTimeSeconds <= 0) {
+                          return (
+                            <Text style={styles.lateMessage}>
+                              ⚠️ 이미 늦었습니다.{'\n'}다음 버스를 이용하세요.
+                            </Text>
+                          );
+                        }
+                        return (
+                          <View>
+                            <Text style={styles.departureTimeInfo}>
+                              출발 시간: {formatTime(departureTimeSeconds)} 후
+                              {' (도착 '}
+                              {formatTime(arrival.arrivalTime)}
+                              {' - 도보 '}
+                              {formatTime(walkingTime)}
+                              {')'}
+                            </Text>
+                            <Text style={styles.departureTimeNote}>
+                              * 자동차 경로 거리 기준으로 계산된 대략적인 시간입니다
+                            </Text>
+                          </View>
+                        );
+                      })()}
                     </View>
+                  </TouchableOpacity>
+                  {arrival.arrivalTime2 && (
+                      <TouchableOpacity
+                      style={styles.arrivalRow}
+                      onPress={async (e) => {
+                        e.stopPropagation();
+                        setSelectedRoute(arrival.routeId);
+                        setSelectedBusIndex(1);
+                        
+                        // 두 번째 버스 선택 시 도보 시간 조회 (아직 조회하지 않은 경우)
+                        if (!walkingTime) {
+                          setIsLoadingWalkingTime(true);
+                          try {
+                            const route = await calculateWalkingTime(currentLocation, busStop);
+                            if (route) {
+                              setWalkingTime(route.duration);
+                            }
+                          } catch (error) {
+                            console.error('도보 시간 조회 오류:', error);
+                          } finally {
+                            setIsLoadingWalkingTime(false);
+                          }
+                        }
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.arrivalLabel}>두 번째 버스:</Text>
+                      <View style={styles.arrivalDetails}>
+                        {arrival.locationNo2 !== undefined && (
+                          <Text style={styles.arrivalDetailText}>
+                            남은 정류장: {arrival.locationNo2}개
+                          </Text>
+                        )}
+                        {arrival.vehicleType2 && (
+                          <Text style={styles.arrivalDetailText}>
+                            차량유형: {arrival.vehicleType2}
+                          </Text>
+                        )}
+                        <Text style={styles.arrivalTime2}>
+                          도착예상시간: {formatTime(arrival.arrivalTime2)}
+                        </Text>
+                        {isRouteSelected && selectedBusIndex === 1 && (() => {
+                          if (isLoadingWalkingTime) {
+                            return (
+                              <Text style={styles.loadingMessage}>
+                                도보 시간 계산 중...
+                              </Text>
+                            );
+                          }
+                          if (!walkingTime) {
+                            return null;
+                          }
+                          const departureTimeSeconds = arrival.arrivalTime2 - walkingTime;
+                          if (departureTimeSeconds <= 0) {
+                            return (
+                              <Text style={styles.lateMessage}>
+                                ⚠️ 이미 늦었습니다.{'\n'}다음 버스를 이용하세요.
+                              </Text>
+                            );
+                          }
+                          return (
+                            <View>
+                              <Text style={styles.departureTimeInfo}>
+                                출발 시간: {formatTime(departureTimeSeconds)} 후
+                                {' (도착 '}
+                                {formatTime(arrival.arrivalTime2)}
+                                {' - 도보 '}
+                                {formatTime(walkingTime)}
+                                {')'}
+                              </Text>
+                              <Text style={styles.departureTimeNote}>
+                                * 자동차 경로 거리 기준으로 계산된 대략적인 시간입니다
+                              </Text>
+                            </View>
+                          );
+                        })()}
+                      </View>
+                    </TouchableOpacity>
                   )}
 
                   {walkingTime && departureTime && (
@@ -228,34 +435,39 @@ export default function BusArrivalInfo({
                   )}
                 </View>
 
-                <TouchableOpacity
-                  onPress={() => handleSetAlert(arrival)}
-                  style={[
-                    styles.alertButton,
-                    isSelected && styles.alertButtonActive,
-                  ]}
+                  <TouchableOpacity
+                    onPress={() => handleSetAlert(arrival)}
+                    style={[
+                      styles.alertButton,
+                      isRouteSelected && styles.alertButtonActive,
+                    ]}
                 >
                   <Ionicons
-                    name={isSelected ? 'checkmark-circle' : 'notifications-outline'}
+                    name={isRouteSelected ? 'checkmark-circle' : 'notifications-outline'}
                     size={18}
                     color="#fff"
                   />
                   <Text style={styles.alertButtonText}>
-                    {isSelected ? '알림 설정됨' : '출발 알림 설정'}
+                    {isRouteSelected ? '알림 설정됨' : '출발 알림 설정'}
                   </Text>
                 </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>
       )}
       
       {/* 데이터 출처 표기 */}
-      <View style={styles.attribution}>
-        <Text style={styles.attributionText}>
-          데이터 제공: {getRegionName(detectRegion(busStop.latitude, busStop.longitude))}
-        </Text>
-      </View>
+      {!supportMessage && (
+        <View style={styles.attribution}>
+          <Text style={styles.attributionText}>
+            {process.env.EXPO_PUBLIC_PUBLIC_DATA_API_KEY 
+              ? '데이터 제공: 국토교통부(TAGO)'
+              : `데이터 제공: ${getRegionName(detectRegion(busStop.latitude, busStop.longitude))}`
+            }
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -373,23 +585,58 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   arrivalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   arrivalLabel: {
     fontSize: 14,
+    fontWeight: '600',
     color: '#9ca3af',
+    marginBottom: 6,
+  },
+  arrivalDetails: {
+    flexDirection: 'column',
+  },
+  arrivalDetailText: {
+    fontSize: 13,
+    color: '#d1d5db',
+    marginBottom: 4,
   },
   arrivalTime: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#38bdf8',
+    marginTop: 4,
   },
   arrivalTime2: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#cbd5f5',
+    marginTop: 4,
+  },
+  departureTimeInfo: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#22c55e',
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderRadius: 6,
+  },
+  departureTimeNote: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginTop: 4,
+    marginLeft: 8,
+    fontStyle: 'italic',
+  },
+  lateMessage: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ef4444',
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 6,
   },
   departureInfo: {
     marginTop: 12,
@@ -436,6 +683,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6b7280',
     textAlign: 'center',
+  },
+  notSupportedContainer: {
+    alignItems: 'center',
+    padding: 24,
+  },
+  warningIcon: {
+    marginBottom: 12,
+  },
+  notSupportedTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#f59e0b',
+    marginBottom: 8,
+  },
+  notSupportedText: {
+    fontSize: 13,
+    color: '#9ca3af',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

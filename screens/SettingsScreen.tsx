@@ -177,6 +177,27 @@ export default function SettingsScreen() {
       )}
 
       <View style={styles.section}>
+        <View style={styles.sectionTitleRow}>
+          <Ionicons name="information-circle" size={18} color="#38bdf8" style={styles.sectionIcon} />
+          <Text style={styles.sectionTitle}>서비스 안내</Text>
+        </View>
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoText}>
+            버스 도착 정보는 국토교통부(TAGO) 전국 통합 API를 통해 제공됩니다.
+          </Text>
+          <Text style={styles.infoText}>
+            TAGO API 키를 설정하시면 전국 대부분의 도시에서 서비스를 이용하실 수 있습니다.
+          </Text>
+          <Text style={styles.infoText}>
+            서울/경기 지역의 경우, TAGO API 실패 시 백업용으로 해당 지역 API 키를 추가로 설정할 수 있습니다.
+          </Text>
+          <Text style={styles.infoWarning}>
+            TAGO API는 전국 대부분의 도시를 지원하지만, 일부 소규모 도시는 제공되지 않을 수 있습니다.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <TouchableOpacity
           style={styles.resetButton}
           onPress={() => {
@@ -319,6 +340,22 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontSize: 16,
     fontWeight: '600',
+  },
+  infoContainer: {
+    marginTop: 8,
+  },
+  infoText: {
+    fontSize: 13,
+    color: '#9ca3af',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  infoWarning: {
+    fontSize: 13,
+    color: '#f59e0b',
+    lineHeight: 20,
+    marginTop: 4,
+    fontWeight: '500',
   },
 });
 

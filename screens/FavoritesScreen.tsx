@@ -58,9 +58,6 @@ export default function FavoritesScreen({ navigation }: any) {
             <Text style={styles.removeButtonText}>✕</Text>
           </TouchableOpacity>
         </View>
-        {item.number && (
-          <Text style={styles.stopNumber}>정류장 번호: {item.number}</Text>
-        )}
         {item.address && (
           <Text style={styles.address} numberOfLines={1}>
             {item.address}

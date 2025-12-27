@@ -5,9 +5,10 @@ import LocationTracker from '../components/LocationTracker';
 import BusStopSearch from '../components/BusStopSearch';
 import BusArrivalInfo from '../components/BusArrivalInfo';
 import { Location, BusStop } from '../types';
-import { calculateWalkingTime, calculateDistanceQuick } from '../utils/walkingTime';
+import { calculateDistanceQuick } from '../utils/walkingTime';
 import { getSettings } from '../utils/storage';
 import { useNearbyStops } from '../hooks/useNearbyStops';
+import { getCityCodeFromGps } from '../utils/busApi';
 
 type SectionData = {
   type: 'header' | 'location' | 'nearby-header' | 'nearby-stop' | 'search' | 'walking' | 'arrival';
@@ -17,8 +18,8 @@ type SectionData = {
 export default function HomeScreen() {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [selectedStop, setSelectedStop] = useState<BusStop | null>(null);
-  const [walkingTime, setWalkingTime] = useState<number | null>(null);
   const [defaultRadius, setDefaultRadius] = useState(1000);
+  const [cityCode, setCityCode] = useState<string | null>(null);
 
   const nearbyStops = useNearbyStops(currentLocation, defaultRadius);
 
@@ -31,15 +32,25 @@ export default function HomeScreen() {
     setDefaultRadius(settings.defaultRadius);
   };
 
+  // 위치 업데이트 시 도시코드 조회
   useEffect(() => {
-    if (currentLocation && selectedStop) {
-      calculateWalkingTime(currentLocation, selectedStop).then((route) => {
-        setWalkingTime(route.duration);
-      });
+    if (currentLocation) {
+      getCityCodeFromGps(currentLocation.latitude, currentLocation.longitude)
+        .then((code) => {
+          if (code) {
+            setCityCode(code);
+            console.log('도시코드 조회 완료:', code);
+          }
+        })
+        .catch((error) => {
+          console.warn('도시코드 조회 실패:', error);
+        });
     } else {
-      setWalkingTime(null);
+      setCityCode(null);
     }
-  }, [currentLocation, selectedStop]);
+  }, [currentLocation]);
+
+
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -51,12 +62,14 @@ export default function HomeScreen() {
   };
 
   const renderStopItem = ({ item }: { item: BusStop }) => {
-    const distance = currentLocation
-      ? Math.round(calculateDistanceQuick(currentLocation, item))
-      : null;
+    // API 응답의 distance 값이 있으면 사용, 없으면 계산
+    const distance = item.distance !== undefined
+      ? item.distance
+      : currentLocation
+        ? Math.round(calculateDistanceQuick(currentLocation, item))
+        : null;
     const isSelected = selectedStop?.id === item.id;
     const isFav = nearbyStops.favorites.has(item.id);
-    const itemWalkingTime = isSelected ? walkingTime : null;
 
     return (
       <View>
@@ -68,7 +81,6 @@ export default function HomeScreen() {
           <View style={styles.stopContent}>
             <View style={styles.stopInfo}>
               <Text style={styles.stopName}>{item.name}</Text>
-              {item.number && <Text style={styles.stopNumber}>번호: {item.number}</Text>}
               {item.address && <Text style={styles.stopAddress}>{item.address}</Text>}
               {distance !== null && (
                 <Text style={styles.stopDistance}>거리: {distance}m</Text>
@@ -88,24 +100,13 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
         
-        {/* 선택된 정류장 바로 아래에 도보 정보와 도착 정보 표시 */}
+        {/* 선택된 정류장 바로 아래에 도착 정보 표시 */}
         {isSelected && currentLocation && (
           <View style={styles.selectedStopInfo}>
-            {itemWalkingTime && (
-              <View style={styles.walkingInfoInline}>
-                <View style={styles.walkingTitleRow}>
-                  <Ionicons name="walk" size={18} color="#38bdf8" style={styles.walkingIcon} />
-                  <Text style={styles.walkingTitle}>도보 정보</Text>
-                </View>
-                <Text style={styles.walkingTime}>
-                  소요 시간: {formatTime(itemWalkingTime)}
-                </Text>
-              </View>
-            )}
             <BusArrivalInfo
               busStop={item}
               currentLocation={currentLocation}
-              walkingTime={itemWalkingTime}
+              cityCode={cityCode}
               inline={true}
             />
           </View>
@@ -147,7 +148,7 @@ export default function HomeScreen() {
     }
 
     return result;
-  }, [currentLocation, nearbyStops.stops, selectedStop, walkingTime]);
+  }, [currentLocation, nearbyStops.stops, selectedStop]);
 
   const renderItem = ({ item }: { item: SectionData }) => {
     switch (item.type) {

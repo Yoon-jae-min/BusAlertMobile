@@ -83,11 +83,6 @@ export default function BusStopSearch({
           <Text style={styles.selectedTitle}>
             선택된 정류장: {selectedStop.name}
           </Text>
-          {selectedStop.number && (
-            <Text style={styles.selectedSubtitle}>
-              정류장 번호: {selectedStop.number}
-            </Text>
-          )}
           <TouchableOpacity
             onPress={() => onStopSelect(null as any)}
             style={styles.deselectButton}
@@ -107,9 +102,6 @@ export default function BusStopSearch({
               onPress={() => handleSelectStop(item)}
             >
               <Text style={styles.resultName}>{item.name}</Text>
-              {item.number && (
-                <Text style={styles.resultNumber}>번호: {item.number}</Text>
-              )}
               {item.address && (
                 <Text style={styles.resultAddress}>{item.address}</Text>
               )}
