@@ -1,0 +1,29 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 -->
+  <rect width="1024" height="1024" rx="200" fill="#020617"/>
+  
+  <!-- 버스 본체 -->
+  <rect x="150" y="300" width="724" height="400" rx="40" fill="#3B82F6"/>
+  <rect x="150" y="300" width="724" height="200" rx="40" fill="#1E40AF"/>
+  
+  <!-- 창문 -->
+  <rect x="200" y="350" width="120" height="120" rx="15" fill="#60A5FA" opacity="0.8"/>
+  <rect x="360" y="350" width="120" height="120" rx="15" fill="#60A5FA" opacity="0.8"/>
+  <rect x="520" y="350" width="120" height="120" rx="15" fill="#60A5FA" opacity="0.8"/>
+  <rect x="680" y="350" width="120" height="120" rx="15" fill="#60A5FA" opacity="0.8"/>
+  
+  <!-- 바퀴 -->
+  <circle cx="280" cy="750" r="60" fill="#1F2937"/>
+  <circle cx="280" cy="750" r="40" fill="#374151"/>
+  <circle cx="744" cy="750" r="60" fill="#1F2937"/>
+  <circle cx="744" cy="750" r="40" fill="#374151"/>
+  
+  <!-- 알림 벨 아이콘 (상단) -->
+  <circle cx="512" cy="150" r="80" fill="#EF4444"/>
+  <path d="M 512 100 L 512 180 M 492 120 L 532 120" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="512" cy="120" r="8" fill="white"/>
+  
+  <!-- 텍스트 (선택사항) -->
+  <text x="512" y="950" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#60A5FA" text-anchor="middle">BUS</text>
+</svg>
+
