@@ -1,185 +1,315 @@
-# 버스 도착 알림 모바일 앱 🚌
+# 🚌 버스 도착 알림 모바일 앱
 
-현재 위치부터 버스 정류장까지의 도보 시간을 계산하고, 버스 도착 시간에 맞춰 출발해야 하는 시간을 알려주는 네이티브 모바일 앱입니다.
+## 📋 프로젝트 개요
 
-## 주요 기능
+현재 위치부터 버스 정류장까지의 도보 시간을 계산하고, 버스 도착 시간에 맞춰 출발해야 하는 시간을 알려주는 React Native 모바일 앱입니다.
 
-- 📍 **GPS 위치 추적**: 실시간 위치 확인 및 추적
-- 🔍 **정류장 검색**: 버스 정류장 검색 및 선택
-- ⏰ **도착 시간 조회**: 실시간 버스 도착 시간 확인
-- 🚶 **도보 시간 계산**: 카카오 길찾기 API를 사용한 실제 도로 경로 기반 도보 시간 계산
-- 🔔 **푸시 알림**: 출발해야 하는 시간을 푸시 알림으로 알려줌
+---
 
-## 기술 스택
+## ✨ 주요 기능
 
-- **React Native** (Expo)
-- **TypeScript**
-- **Expo Location** - GPS 위치 추적
-- **Expo Notifications** - 푸시 알림
+### 1. 위치 기반 정류장 검색
 
-## 시작하기
+- **GPS 기반 근처 정류장 조회**: TAGO API를 사용하여 현재 위치 기준 500m 반경 내 정류장 검색
+- **정류장 키워드 검색**: 카카오 로컬 API를 사용한 정류장명 검색
+- **거리 표시**: 각 정류장까지의 거리 실시간 표시
+- **지도 표시**: 주변 정류장을 지도에 핀으로 표시 (리스트/지도 토글)
 
-### 1. 의존성 설치
+### 2. 실시간 버스 도착 정보
 
-```bash
-cd C:\Users\androidJM\Desktop\Project\Apps\BusAlertMobile
-npm install
-```
+- **전국 버스 정보 지원**: TAGO API를 통한 전국 버스 도착 정보 조회
+- **서울/경기 지역 우선**: BIS API를 우선 사용하여 더 정확한 정보 제공
+- **노선별 정렬**: 노선 유형별(광역 > 간선 > 지선) 그룹화 후 노선번호 순 정렬
+- **첫 번째/두 번째 버스 정보**: 각 노선의 첫 번째, 두 번째 버스 도착 시간 표시
+- **남은 정류장 수**: 버스까지 남은 정류장 수 표시
+- **저상버스 표시**: 저상버스 여부 표시
 
-### 2. 개발 서버 실행
+### 3. 도보 시간 계산
 
-#### Android
-```bash
-npm run android
-```
+- **출발 시간 계산**: 버스 도착 시간 - 도보 시간 = 출발 시간
+- **늦음 경고**: 출발 시간이 지났을 경우 경고 메시지 표시
+- **카카오 길찾기 API**: 자동차 경로 거리를 기반으로 도보 시간 추정
+- **폴백 계산**: API 실패 시 하버사인 공식으로 직선 거리 기반 계산
 
-#### iOS (macOS 필요)
-```bash
-npm run ios
-```
+### 4. 즐겨찾기
 
-#### 웹 브라우저
-```bash
-npm run web
-```
+- **정류장 즐겨찾기**: 자주 사용하는 정류장 저장
+- **즐겨찾기 목록**: 별도 화면에서 즐겨찾기 정류장 관리
 
-### 3. Expo Go 앱 사용 (추천)
+### 5. 알림 기능
 
-1. 스마트폰에 **Expo Go** 앱 설치
-   - [Android](https://play.google.com/store/apps/details?id=host.exp.exponent)
-   - [iOS](https://apps.apple.com/app/expo-go/id982107779)
+- **출발 시간 알림**: 설정한 시간 전에 푸시 알림 발송
+- **알림 설정**: 노선별 알림 활성화/비활성화
+- **알림 이력**: 알림 발송 이력 확인
 
-2. 개발 서버 실행
-```bash
-npm start
-```
+### 6. 설정
 
-3. QR 코드 스캔하여 앱 실행
+- **알림 사전 시간**: 몇 분 전에 알림을 받을지 설정
+- **자동 새로고침**: 주기적으로 버스 도착 정보 자동 갱신
+- **새로고침 간격**: 자동 새로고침 주기 설정
 
-## 환경 변수 설정
+---
 
-프로젝트 루트에 `.env` 파일을 생성하고 다음을 추가하세요:
+## 🛠 기술 스택
 
-```env
-# 카카오 로컬 API 키 (정류장 검색)
-EXPO_PUBLIC_KAKAO_REST_KEY=your_kakao_rest_api_key_here
+### 프레임워크 & 언어
 
-# 서울시 버스정보시스템 API 키 (버스 도착 정보)
-EXPO_PUBLIC_SEOUL_BUS_API_KEY=your_seoul_bus_api_key_here
-```
+- **React Native** (Expo SDK 54)
+- **TypeScript** 5.9.2
+- **React** 19.1.0
 
-## API 키 발급
+### 주요 라이브러리
 
-### 1. 카카오 API 키 (정류장 검색 + 도보 시간 계산)
-카카오 API 키 하나로 다음 기능을 모두 사용할 수 있습니다:
-- 정류장 검색 (로컬 API)
-- 도보 시간 계산 (길찾기 API)
+- **@expo/vector-icons**: 아이콘
+- **@react-native-async-storage/async-storage**: 로컬 저장소
+- **expo-location**: GPS 위치 추적
+- **expo-notifications**: 푸시 알림
+- **expo-constants**: 앱 설정 정보
+- **react-native-maps**: 지도 표시 및 마커
 
-**발급 방법:**
-1. https://developers.kakao.com/ 접속
-2. 내 애플리케이션 → 애플리케이션 추가하기
-3. 앱 설정 → 플랫폼 설정 (웹 플랫폼 등록 필요)
-4. 앱 키 → REST API 키 복사
-5. `.env` 파일에 `EXPO_PUBLIC_KAKAO_REST_KEY`로 설정
+### API 연동
 
-**참고:**
-- 카카오 길찾기 API는 전국적으로 지원됩니다.
-- API 키가 없으면 직선 거리 기반으로 계산됩니다 (하버사인 공식).
+- **카카오 로컬 API**: 정류장 검색
+- **카카오 길찾기 API**: 도보 시간 계산 (자동차 경로 거리 활용)
+- **TAGO API** (국가대중교통정보센터): 전국 버스 도착 정보, 근처 정류장 조회
+- **BIS API** (서울/경기): 지역별 버스 정보 (서울/경기 지역 우선 사용)
 
-### 2. 버스 도착 정보 API 키 (전국 지원)
+---
 
-앱은 위치 기반으로 지역을 자동 감지하여 해당 지역의 API를 사용합니다.
-
-**지원 지역:**
-- 서울시
-- 경기도
-- 부산시
-- 인천시
-- 대구시
-- 광주시
-- 대전시
-
-**API 키 발급 방법:**
-
-**서울시:**
-1. https://www.data.go.kr/ 또는 http://data.seoul.go.kr/ 접속
-2. "서울시 버스정보시스템" 검색 후 API 신청
-3. `.env` 파일에 `EXPO_PUBLIC_SEOUL_BUS_API_KEY`로 설정
-
-**경기도:**
-1. https://www.data.go.kr/ 접속
-2. "경기도 버스정보시스템" 검색 후 API 신청
-3. `.env` 파일에 `EXPO_PUBLIC_GYEONGGI_BUS_API_KEY`로 설정
-
-**기타 지역:**
-- 각 지역별로 공공데이터포털에서 해당 지역 버스 API 검색
-- 환경변수명: `EXPO_PUBLIC_[지역명]_BUS_API_KEY`
-  - 예: `EXPO_PUBLIC_BUSAN_BUS_API_KEY`, `EXPO_PUBLIC_INCHEON_BUS_API_KEY` 등
-
-**전국 통합 API (TAGO):**
-- 국가대중교통정보센터 API 사용 가능
-- `.env` 파일에 `EXPO_PUBLIC_TAGO_API_KEY`로 설정하면 전국 지원
-
-**참고**: 
-- API 키가 없어도 앱은 실행되지만, 더미 데이터를 사용합니다.
-- 위치 기반으로 자동으로 지역을 감지하여 해당 지역 API를 사용합니다.
-- 각 지역별 API 구조가 다를 수 있어 일부 지역은 추가 작업이 필요할 수 있습니다.
-
-## 앱 빌드 및 배포
-
-### Android APK 빌드
-```bash
-npx expo build:android
-```
-
-### iOS 빌드 (macOS 필요)
-```bash
-npx expo build:ios
-```
-
-## 권한 설정
-
-앱에서 다음 권한이 필요합니다:
-- **위치 권한**: GPS 위치 추적
-- **알림 권한**: 출발 시간 알림
-
-## 주요 파일 구조
+## 📁 프로젝트 구조
 
 ```
 BusAlertMobile/
-├── App.tsx                 # 메인 앱 컴포넌트
-├── components/             # React Native 컴포넌트
-│   ├── LocationTracker.tsx    # GPS 위치 추적
-│   ├── BusStopSearch.tsx      # 정류장 검색
-│   └── BusArrivalInfo.tsx     # 도착 정보 표시
-├── utils/                  # 유틸리티 함수
-│   ├── location.ts         # 위치 관련 함수
-│   ├── busApi.ts           # 버스 API 연동
-│   ├── walkingTime.ts      # 도보 시간 계산
-│   └── notifications.ts    # 알림 관련 함수
-└── types/                  # TypeScript 타입 정의
-    └── index.ts
+├── App.tsx                    # 메인 앱 컴포넌트 (탭 네비게이션)
+├── src/
+│   ├── types/                 # TypeScript 타입 정의
+│   │   └── index.ts
+│   ├── components/            # 공통 컴포넌트
+│   │   └── TabBar.tsx         # 하단 탭 바
+│   ├── screens/               # 화면 컴포넌트
+│   │   ├── HomeScreen.tsx     # 홈 화면 (메인)
+│   │   ├── FavoritesScreen.tsx # 즐겨찾기 화면
+│   │   ├── AlertsScreen.tsx   # 알림 설정 화면
+│   │   └── SettingsScreen.tsx # 설정 화면
+│   ├── hooks/                 # 커스텀 훅
+│   │   └── useNearbyStops.ts  # 근처 정류장 조회 훅
+│   ├── features/              # 기능별 모듈
+│   │   ├── location/          # 위치 관련
+│   │   │   ├── components/
+│   │   │   │   └── LocationTracker.tsx
+│   │   │   └── utils/
+│   │   │       └── location.ts
+│   │   ├── walking/           # 도보 시간 계산
+│   │   │   └── utils/
+│   │   │       └── walkingTime.ts
+│   │   ├── bus-stop/          # 버스 정류장
+│   │   │   └── components/
+│   │   │       ├── BusStopSearch.tsx
+│   │   │       ├── NearbyStops.tsx
+│   │   │       └── BusStopMap.tsx
+│   │   └── bus-arrival/       # 버스 도착 정보
+│   │       └── components/
+│   │           └── BusArrivalInfo.tsx
+│   └── services/               # 서비스 레이어
+│       ├── api/               # API 통신
+│       │   ├── common/         # 공통 모듈
+│       │   │   ├── constants.ts
+│       │   │   ├── types.ts
+│       │   │   ├── utils.ts
+│       │   │   ├── dummyData.ts
+│       │   │   └── regionUtils.ts
+│       │   ├── kakao/          # 카카오 API
+│       │   │   └── kakaoApi.ts
+│       │   ├── tago/           # TAGO API
+│       │   │   └── tagoApi.ts
+│       │   ├── bis/            # BIS API
+│       │   │   └── bisApi.ts
+│       │   └── index.ts        # 통합 모듈
+│       ├── storage/            # 로컬 저장소
+│       │   └── storage.ts
+│       └── notifications/      # 알림
+│           └── notifications.ts
+├── assets/                     # 이미지 및 아이콘
+│   ├── icon.svg               # 앱 아이콘 (SVG)
+│   └── ...
+└── app.config.js               # Expo 설정
 ```
 
-## TODO
+---
 
-- [ ] 실제 버스 API 연동
-- [ ] 정류장 즐겨찾기 기능
-- [ ] 지도 표시 (react-native-maps)
-- [ ] 오프라인 지원
-- [ ] 다크 모드
+## 🔑 환경 변수 설정
 
-## 문제 해결
+프로젝트 루트에 `.env` 파일 생성:
 
-### 위치 권한 오류
-- 설정 → 앱 → 권한 → 위치 → 허용
+```env
+# 공공데이터포털 통합 인증키 (TAGO API, 전국 버스 정보)
+EXPO_PUBLIC_PUBLIC_DATA_API_KEY=your_public_data_api_key
 
-### 알림이 작동하지 않음
-- 설정 → 앱 → 권한 → 알림 → 허용
+# 카카오 REST API 키 (정류장 검색, 도보 시간 계산)
+EXPO_PUBLIC_KAKAO_REST_KEY=your_kakao_rest_api_key
+```
 
-### 빌드 오류
+### API 키 발급 방법
+
+#### 1. 공공데이터포털 API 키
+
+- **사이트**: https://www.data.go.kr/
+- **용도**: TAGO API (전국 버스 정보), 근처 정류장 조회, BIS API (서울/경기)
+- **발급**: 공공데이터포털 회원가입 → 활용신청 → 인증키 발급
+
+#### 2. 카카오 API 키
+
+- **사이트**: https://developers.kakao.com/
+- **용도**: 정류장 검색, 도보 시간 계산
+- **발급**: 카카오 개발자 콘솔 → 내 애플리케이션 → 앱 키 → REST API 키
+- **주의**: 카카오맵 서비스 활성화 필요 (제품 설정 → 카카오맵 → 활성화 설정 ON)
+
+---
+
+## 🚀 실행 방법
+
+### 개발 환경 설정
+
 ```bash
-# 캐시 클리어
-npx expo start -c
+# 의존성 설치
+npm install
+
+# 개발 서버 실행
+npx expo start --clear
 ```
 
+### Expo Go 사용 (추천)
+
+1. 스마트폰에 **Expo Go** 앱 설치
+2. 개발 서버 실행 후 QR 코드 스캔
+
+### 플랫폼별 실행
+
+```bash
+# Android
+npm run android
+
+# iOS (macOS 필요)
+npm run ios
+
+# Web
+npm run web
+```
+
+---
+
+## 📱 주요 화면
+
+### 1. 홈 화면
+
+- 현재 위치 표시
+- 근처 정류장 목록 (500m 반경)
+- 정류장 검색
+- **리스트/지도 토글**: 리스트 보기와 지도 보기 전환
+- 선택한 정류장의 버스 도착 정보
+- 출발 시간 계산 및 표시
+
+### 2. 즐겨찾기 화면
+
+- 저장한 정류장 목록
+- 즐겨찾기 추가/제거
+
+### 3. 알림 화면
+
+- 알림 설정 목록
+- 알림 활성화/비활성화
+- 알림 이력
+
+### 4. 설정 화면
+
+- 알림 사전 시간 설정
+- 자동 새로고침 설정
+- 새로고침 간격 설정
+
+---
+
+## 🎨 UI/UX 특징
+
+- **다크 테마**: 어두운 배경 (#020617) 기반
+- **모던한 디자인**: 플랫 디자인, 둥근 모서리
+- **직관적인 아이콘**: Ionicons 사용
+- **반응형 레이아웃**: 다양한 화면 크기 지원
+- **지도 통합**: react-native-maps를 사용한 지도 표시
+
+---
+
+## 🔄 데이터 흐름
+
+1. **위치 정보 수집**: GPS로 현재 위치 획득
+2. **도시코드 조회**: TAGO API로 GPS 기반 도시코드 추출
+3. **근처 정류장 조회**: TAGO API로 500m 반경 정류장 검색
+4. **정류장 선택**: 사용자가 정류장 선택
+5. **도착 정보 조회**: 
+   - 서울/경기 지역: BIS API 우선 → 실패 시 TAGO API
+   - 기타 지역: TAGO API
+6. **도보 시간 계산**: 카카오 길찾기 API로 도보 시간 계산
+7. **출발 시간 계산**: 도착 시간 - 도보 시간 = 출발 시간
+8. **알림 설정**: 사용자가 알림 설정 시 스케줄링
+
+---
+
+## 🔧 최근 주요 변경사항
+
+### 프로젝트 구조 리팩토링 (2024.12)
+- **모듈화**: 기능별로 `src/features/` 폴더 구조로 재구성
+- **서비스 레이어 분리**: API, storage, notifications를 `src/services/`로 분리
+- **유지보수성 향상**: 관련 기능끼리 그룹화하여 코드 가독성 개선
+
+### API 우선순위 변경 (2024.12)
+- **서울/경기 지역**: BIS API 우선 사용 → TAGO API 폴백
+- **정확도 향상**: 카카오 버스 앱과 유사한 수준의 정확한 정보 제공
+- **BIS API 파싱 개선**: `arrtime` 필드 우선 사용으로 더 정확한 도착 시간 계산
+
+### 지도 기능 추가 (2024.12)
+- **지도 표시**: react-native-maps를 사용한 지도 통합
+- **리스트/지도 토글**: 헤더 버튼으로 리스트와 지도 전환
+- **정류장 핀 표시**: 주변 정류장을 지도에 핀으로 표시
+- **선택된 정류장 강조**: 선택한 정류장을 다른 스타일로 표시
+
+### Expo SDK 업그레이드 (2024.12)
+- **SDK 54로 업그레이드**
+  - React 19.1.0
+  - React Native 0.81.5
+  - 최신 Expo 패키지 버전 적용
+
+---
+
+## 🐛 알려진 제한사항
+
+1. **도보 시간 정확도**: 카카오 길찾기 API는 자동차 경로를 기반으로 하므로 실제 도보 시간과 차이가 있을 수 있음
+2. **반경 제한**: TAGO API는 500m 반경만 지원 (고정)
+3. **지역별 API 차이**: 일부 지역은 API 구조가 다를 수 있어 추가 작업 필요
+4. **API 데이터 소스 차이**: 카카오 버스 앱은 각 지역 BIS와 직접 협력하여 더 정확한 정보를 제공할 수 있음
+
+---
+
+## 📝 향후 개선 계획
+
+- [x] 지도 표시 기능 (react-native-maps) ✅ 완료
+- [ ] 실제 도보 경로 기반 시간 계산 (카카오 도보 API 지원 시)
+- [ ] 오프라인 모드 지원
+- [ ] 다크/라이트 모드 전환
+- [ ] 정류장 번호 표시 (TAGO API에서 제공 시)
+- [ ] 버스 노선 상세 정보
+- [ ] 경로 추천 기능
+- [ ] 더 많은 지역 BIS API 연동
+
+---
+
+## 📄 라이선스
+
+Private Project
+
+---
+
+## 👤 개발 정보
+
+- **프로젝트명**: BusAlertMobile
+- **버전**: 1.0.0
+- **플랫폼**: iOS, Android, Web
+- **개발 환경**: Expo SDK 54, React Native 0.81.5
